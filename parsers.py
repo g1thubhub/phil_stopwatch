@@ -9,7 +9,7 @@ import operator
 import gzip
 import hashlib
 import glob
-from typing import Tuple, List, Deque
+from typing import Tuple, List, Deque, Dict
 from collections import deque, defaultdict
 import plotly.graph_objs as go
 from plotly.graph_objs import Scatter
@@ -71,7 +71,6 @@ class ProfileParser:
             profiler_name = profiler[0]
             metric_map = profiler[1]
             self.metric_conversions.append((profiler_name, dict(map(lambda kv: (kv[0], (conversion_map[kv[1][1]], kv[1][2])), metric_map.items()))))
-
 
     def parse_profiles(self, id=''):
         if self.resource_format == '':  # First valid JSON profile record in file sets for whole file
@@ -152,6 +151,14 @@ class ProfileParser:
             self.parse_profiles(id)
         return list(self.relevant_metrics.keys())
 
+    def get_maxima(self) -> Dict[str, float]:
+        maxima = {}
+        all_metrics: List[Scatter] = self.ignore_metrics(list())
+        for metric in all_metrics:
+            max_value = get_max_y([metric])
+            maxima[metric.name] = float(max_value)
+        return maxima
+
     def deduce_profiler(self):
         # Determining format of profiler used
         stream = self.open_stream()
@@ -205,11 +212,11 @@ class ProfileParser:
                                               mode='lines+markers', name=display_key_name))
         return data_points
 
-    def get_metrics(self, names=list()) -> List[Scatter]:
+    def get_metrics(self, names=list(), id='') -> List[Scatter]:
         if len(names) == 0:
             return self.make_graph()
         else:
-            all_metrics = self.make_graph()
+            all_metrics = self.make_graph(id)
             relevant_metrics = list(filter(lambda x: any([ele in x['name'] for ele in names]), all_metrics))
             return relevant_metrics
 
@@ -761,6 +768,17 @@ class AppParser:
         else:
             raise Exception('Path does not contain log files in known format')
         self.identify_master_log()
+
+    def get_maxima(self) -> Dict[str, float]:
+        maxima = {}
+        for parser in self.parsers:
+            all_metrics: List[Scatter] = parser.profile_parser.get_maxima()
+            for metric in all_metrics:
+                metric_name = metric.name
+                max_value = float(get_max_y([metric]))
+                if metric_name in maxima and max_value > maxima[metric_name]:
+                    maxima[metric_name] = max_value
+        return maxima
 
     def extract_errors(self) -> Deque[Tuple[str, List[str]]]:
         app_errors = deque()

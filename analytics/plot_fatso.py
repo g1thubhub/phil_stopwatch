@@ -1,7 +1,6 @@
 from plotly.offline import plot
 from parsers import ProfileParser, SparkLogParser
-from plotly.graph_objs import Data, Figure, Layout
-from helper import get_max_y
+from plotly.graph_objs import Figure
 
 
 # The two files used below are created by running
@@ -27,7 +26,7 @@ plot(fig, filename='fatso.html')
 # Profiling PySpark & JVM:
 # Run with
 # ~/spark-2.4.0-bin-hadoop2.7/bin/spark-submit --conf spark.python.profile=true --conf spark.driver.extraJavaOptions=-javaagent:/Users/phil/jvm-profiler/target/jvm-profiler-1.0.0.jar=sampleInterval=100,metricInterval=100,reporter=com.uber.profiling.reporters.FileOutputReporter,outputDir=/Users/phil/IdeaProjects/phil_stopwatch/analytics/data/profile_fatso  ./spark_jobs/job_fatso.py cpumemstack /Users/phil/IdeaProjects/phil_stopwatch/analytics/data/profile_fatso > Fatso_PySpark.log
-# 
+#
 # Easiest way is to concatenate all JVM & PySpark profiles into a single file first via
 # cat data/profile_fatso/s_8_7510_cpumem.json <(echo) data/profile_fatso/s_8_7511_cpumem.json <(echo) data/profile_fatso/s_8_7512_cpumem.json <(echo) data/profile_fatso/CpuAndMemory.json > data/profile_fatso/CombinedProfile.json
 # ...and then applying some manual settings:
