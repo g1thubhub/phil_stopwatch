@@ -4,7 +4,7 @@ from parsers import ProfileParser, SparkLogParser
 from helper import get_max_y
 
 
-profile_file = './data/ProfileStraggler/CpuAndMemoryFatso.json.gz'  # Output from JVM profiler
+profile_file = './data/ProfileStraggler/CpuAndMemory.json.gz'  # Output from JVM profiler
 profile_parser = ProfileParser(profile_file, normalize=True)
 # data_points = profile_parser.ignore_metrics(['ScavengeCollCount'])
 data_points = profile_parser.get_metrics(['systemCpuLoad', 'processCpuLoad'])
