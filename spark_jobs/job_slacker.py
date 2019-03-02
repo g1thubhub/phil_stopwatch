@@ -1,16 +1,16 @@
-from pyspark.sql import SparkSession
 import os
 import datetime
 from sys import argv
+from pyspark.sql import SparkSession
+from pyspark import SparkContext
 from helper import secondsSleep
 from pyspark_profilers import profiler_map
-from pyspark import SparkContext
+
 
 # Avoids this problem: 'Exception: Python in worker has different version 2.7 than that in driver 3.6',
 os.environ['PYSPARK_PYTHON'] = '/usr/local/bin/python3.6'
 os.environ['PYSPARK_DRIVER_PYTHON'] = '/usr/local/bin/python3.6'
 
-#  ~/spark-2.4.0-bin-hadoop2.7/bin/spark-submit --conf spark.python.profile=true --conf spark.driver.extraJavaOptions=-javaagent:/Users/a/jvm-profiler/target/jvm-profiler-1.0.0.jar=sampleInterval=1000,metricInterval=100,reporter=com.uber.profiling.reporters.FileOutputReporter,outputDir=/Users/a/blogdata/profile_slacker  ~/IdeaProjects/philstopwatch/src/main/scala/profile/pyspark/job_slacker.py cpumemstack /Users/a/blogdata/profile_slacker
 
 def slacking(string):
     result = ''
@@ -20,7 +20,7 @@ def slacking(string):
 
 
 if __name__ == "__main__":
-    profiler = argv[1]  # cpumem
+    profiler = argv[1].lower()  # cpumem
     dump_path = argv[2]  # ./ProfilePythonBusy
     print("^^ Using " + profiler + ' and writing to ' + dump_path)
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     end = str(datetime.datetime.now())
 
     session.sparkContext.dump_profiles(dump_path)
-    # session.sparkContext.show_profiles()
+    # session.sparkContext.show_profiles()  # Uncomment for printing profile records to standard out
 
     print("******************\n" + start + "\n******************")
     print("******************\n" + end + "\n******************")

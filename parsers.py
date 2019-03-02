@@ -1,6 +1,4 @@
 import json
-from helper import r_container_id, metric_definitions, time_patterns, r_spark_log, r_app_start, r_task_start, r_task_end, \
-    r_job_start, r_job_end, extract_nested_keys, conversion_map, to_epochms, ms_to_seconds, get_max_y
 import re
 from datetime import datetime
 import os
@@ -13,6 +11,8 @@ from typing import Tuple, List, Deque, Dict
 from collections import deque, defaultdict
 import plotly.graph_objs as go
 from plotly.graph_objs import Scatter
+from helper import r_container_id, metric_definitions, time_patterns, r_spark_log, r_app_start, r_task_start, r_task_end, \
+    r_job_start, r_job_end, extract_nested_keys, conversion_map, to_epochms, ms_to_seconds, get_max_y
 
 
 class StackParser:

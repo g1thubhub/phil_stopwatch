@@ -6,10 +6,10 @@ import pkgutil
 import socket
 import os
 
+# Avoids this problem: 'Exception: Python in worker has different version 2.7 than that in driver 3.6',
 os.environ['PYSPARK_PYTHON'] = '/usr/local/bin/python3.6'
 os.environ['PYSPARK_DRIVER_PYTHON'] = '/usr/local/bin/python3.6'
-os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
-# OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES ~/spark-2.4.0-bin-hadoop2.7/bin/spark-submit
+os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"  # might be needed for spaCy on MacOS
 
 
 def check_spacy_setup(model_name):  # Should simulate CoreNLP's logging & packaging
@@ -55,6 +55,7 @@ def slow_annotate_text(element, model_name):
     for word in doc:
         annotations.append('//'.join((str(word), word.dep_)))
     return ' '.join(annotations)
+
 
 if __name__ == "__main__":
     standard_model = 'en_core_web_sm'

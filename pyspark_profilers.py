@@ -326,6 +326,7 @@ class CpuMemStackParam(AccumulatorParam):
 #######################################################################################################################
 
 # Profiler map for command line args, default is CpuMemProfiler
-profiler_map = {'customprofiler': CustomProfiler, 'cpumemprofiler': CpuMemProfiler, 'cpumem': CpuMemProfiler,
-             'stackprofiler': StackProfiler, 'stack': StackProfiler, '': CpuMemStackProfiler, 'both': CpuMemStackProfiler,
-                'cpumemstack': CpuMemStackProfiler, 'stackcpumem': CpuMemStackProfiler}
+profiler_map = {'customprofiler': CustomProfiler, 'cpumemprofiler': CpuMemProfiler, 'cpumem': CpuMemProfiler, 'stackprofiler': StackProfiler,
+                'stack': StackProfiler, 'cpumemstackprofiler': CpuMemStackProfiler, 'both': CpuMemStackProfiler,'cpumemstack': CpuMemStackProfiler,
+                'stackcpumem': CpuMemStackProfiler, 'cpumemprofiler': CpuMemProfiler, 'stackprofiler': StackProfiler, 'cpumemstackprofiler': CpuMemStackProfiler
+                }

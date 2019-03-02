@@ -13,10 +13,9 @@ for line in collapsed_ranked_log[:5]:  # print 5 most frequently occurring log c
 #################################################################################################
 
 # Extracting errors from an application:
-app_path = './data/application_1549675138635_0005'
+app_path = './data/application_15496751386_0005/'
 app_parser = AppParser(app_path)
 app_errors: Deque[Tuple[str, List[str]]] = app_parser.extract_errors()
 
 for error in app_errors:
     print(error)
-
