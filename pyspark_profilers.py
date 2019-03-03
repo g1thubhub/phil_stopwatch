@@ -330,3 +330,5 @@ profiler_map = {'customprofiler': CustomProfiler, 'cpumemprofiler': CpuMemProfil
                 'stack': StackProfiler, 'cpumemstackprofiler': CpuMemStackProfiler, 'both': CpuMemStackProfiler,'cpumemstack': CpuMemStackProfiler,
                 'stackcpumem': CpuMemStackProfiler, 'cpumemprofiler': CpuMemProfiler, 'stackprofiler': StackProfiler, 'cpumemstackprofiler': CpuMemStackProfiler
                 }
+
+# Made at https://github.com/g1thubhub/phil_stopwatch by writingphil@gmail.com

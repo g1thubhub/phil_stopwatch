@@ -146,7 +146,7 @@ class ProfileParser:
         else:
             return open(self.filename, 'r')
 
-    def get_available_metrics(self, id=''):
+    def get_available_metrics(self, id='') -> List[str]:
         if len(self.data_points) == 0:
             self.parse_profiles(id)
         return list(self.relevant_metrics.keys())
@@ -241,7 +241,7 @@ class SparkLogParser:
     r_spark_log = r'.* (?:error|info|warning)(.*)'
     log_types = ['error', 'info', 'warn']
 
-    def __init__(self, log_file, profile_file='', id=''):
+    def __init__(self, log_file, profile_file='', id='', normalize=True):
         if log_file != '':
             self.logfile = log_file
             self.time_pattern, self.re_time_pattern, self.re_app_start, self.re_job_start, self.re_job_end = None, None, None, None, None
@@ -253,9 +253,9 @@ class SparkLogParser:
             self.job_intervals = dict()
             self.identify_timeformat()
         if profile_file is '':
-            self.profile_parser = ProfileParser(self.logfile)
+            self.profile_parser = ProfileParser(self.logfile, normalize)
         else:
-            self.profile_parser = ProfileParser(profile_file)
+            self.profile_parser = ProfileParser(profile_file, normalize)
         self.id = id
 
     def open_stream(self):
@@ -264,7 +264,7 @@ class SparkLogParser:
         else:
             return open(self.logfile, 'r')
 
-    def get_available_metrics(self):
+    def get_available_metrics(self) -> List[str]:
         return self.profile_parser.get_available_metrics()
 
     def identify_timeformat(self):
@@ -858,3 +858,5 @@ class AppParser:
 if __name__ == '__main__':
     log_path = '/Users/a/logs/application_1550152404841_0001'
     app_parser = AppParser(log_path)
+
+# Made at https://github.com/g1thubhub/phil_stopwatch by writingphil@gmail.com

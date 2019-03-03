@@ -1,6 +1,6 @@
 from plotly.offline import plot
 from typing import List
-from parsers import AppParser
+from parsers import AppParser, SparkLogParser
 from helper import get_max_y
 from plotly.graph_objs import Figure, Scatter
 
@@ -29,10 +29,10 @@ plot(fig, filename='bigjob-concurrency.html')
 app_parser = AppParser(application_path)
 data_points: List[Scatter] = list()
 
-executor_logs = app_parser.get_executor_logparsers()
+executor_logs: List[SparkLogParser] = app_parser.get_executor_logparsers()
 for parser in executor_logs:
     # print(parser.get_available_metrics())  # ['epochMillis', 'ScavengeCollTime', 'MarkSweepCollTime', 'MarkSweepCollCount', 'ScavengeCollCount', 'systemCpuLoad', 'processCpuLoad', 'nonHeapMemoryTotalUsed', 'nonHeapMemoryCommitted', 'heapMemoryTotalUsed', 'heapMemoryCommitted']
-    relevant_metric = parser.get_metrics(['heapMemoryTotalUsed'])
+    relevant_metric: List[Scatter] = parser.get_metrics(['heapMemoryTotalUsed'])
     data_points.extend(relevant_metric)
 
 max_y = get_max_y(data_points)  # static method, maximum y value needed for cosmetic reasons, scaling tasks

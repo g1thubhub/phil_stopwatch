@@ -2,46 +2,26 @@
 
 A tech blog can be found hereXXX
 
-The Scala sources for the riddles in can be found in this companion project
+The Scala sources for the riddles in can be found in this [companion project](https://github.com/g1thubhub/philstopwatch)
 
-Compositionality
+The project can be locally installed as a module with the following command executed in its base directory:
+```shell
+export PYSPARK_PYTHON=python3
+pip3 install -e .
+```
+The input to all scripts in the [analytics](https://github.com/g1thubhub/phil_stopwatch/tree/master/analytics) folder are output records from a profiler or Spark logs. Two parser classes are defined in [parsers.py](https://github.com/g1thubhub/phil_stopwatch/blob/master/parsers.py) that get initialized with the path to an individual profile file ([ProfileParser](https://github.com/g1thubhub/phil_stopwatch/blob/7dc3431572874d99d18451ec7f93e16ad15ebd23/parsers.py#L59)) or to an individual Spark log file ([SparkLogParser](https://github.com/g1thubhub/phil_stopwatch/blob/7dc3431572874d99d18451ec7f93e16ad15ebd23/parsers.py#L239)). When creating an object of the [AppParser](https://github.com/g1thubhub/phil_stopwatch/blob/7dc3431572874d99d18451ec7f93e16ad15ebd23/parsers.py#L729) class, the constructor expects a path to an application directory under which many log files are located. Concrete examples are shown below. 
 
-Most classes are compositional:
+The design is compositional: Since records from different profilers could have been written to a single file along with logging messages, a _SparkLogParser_ object contains a _ProfileParser_ object in a member field that might never be needed or get initialized. 
 
-An **AppParser** object is basically a list of **SparkLogParser** objects which in turn might wrap a **ProfileParser** object
+Since an application folder typically contains many log files and only one of those, the master log file created by the driver (see below), contains all information about task/stage/job boundaries, an _AppParser_ object contains a list of _ProfileParser_ objects in a member field and most of its methods delegate to them. 
 
+The script [plot_application](https://github.com/g1thubhub/phil_stopwatch/blob/master/analytics/plot_application.py) gives a good overview, it extracts and plots metrics as well as scheduling info from all logs belonging to a Spark application. Further explanations and examples are included below.
 
-Many function available in *AppParser* internally delegate to the implementation in *SparkLogParser* and collect/merge/combine/... the individual results into a single return value for the collection of *SparkLogParser*s
-
-Examples can be found in the script in the *analytics* directory
-
-
-
-
-
-## Input
-The input to all script functionality are records from a Profiler or Spark logs. The design is compositional so log records and profiler records can be in separate files or in one file
-
-## Profilers
-file containing JSON format
-Uber's JVM profiler or Phil's PySpark profiler
-
-### Uber's JVM profiler
-
-or used xxx
-
-In a distributed environment like AWS, Spark executors need to access this JAR file. 
-
-* 
-Upload JAR to S3, accessible to cluster
-spark-submit --deploy-mode cluster --class uk.co.streamhub.executors.ads.vr.AdsExecutor --driver-memory 30g --conf spark.jars=s3://streamhub-releases/batch/qa/phil/jvm-profiler-0.0.9.jar --conf spark.driver.extraJavaOptions=-javaagent:jvm-profiler-0.0.9.jar=sampleInterval=2000,metricInterval=1000 --conf spark.executor.extraJavaOptions=-javaagent:jvm-profiler-0.0.9.jar=sampleInterval=2000,metricInterval=1000 --num-executors 39 --executor-cores 3 s3://streamhub-releases/batch/staging/phil/batch_6795.jar --run-type fixed --run-mode manual --year 2019 --week 2 -p 400 --partitions-write 10 -r daily --metric ad:uniqueViewers
-
-
-
-
-
-
-## Analyzing and Visualizing records
+When visualizing metrics, normalization logic is applied by default so different metric types can be conveniently displayed in the same plot. This can be prevented by using a `normalize=False` parameter when constructing a _SparkLogParser_ or _ProfileParser_ object like so: 
+```python
+log_parser = SparkLogParser('./data/ProfileFatso/JobFatso.log.gz', normalize=False)
+```
+The normalization logic is configured in [this dictionary](https://github.com/g1thubhub/phil_stopwatch/blob/7dc3431572874d99d18451ec7f93e16ad15ebd23/helper.py#L5) (second element in the lists) which also defines all known metrics and can be extended for new profilers.
 
 ## Uber's JVM profiler
 Uber's [JVM profiler](https://github.com/uber-common/jvm-profiler) has several advantages so this project assumes that it will be used as the JVM profiler (the [ProfileParser](https://github.com/g1thubhub/phil_stopwatch/blob/e83645f44e7fecf43331e0b1dcf9920a6deb027c/parsers.py#L59) code could be easily modified to use outputs from other profilers though). The profiler JAR can be built with the following commands:
@@ -63,7 +43,7 @@ jvm-profiler-1.0.0.jar
 ... or you can use the JAR that I built from [here](https://github.com/g1thubhub/philstopwatch/blob/master/src/main/resources/jvm-profiler-1.0.0.jar)
 
 
-## Profiling a single JVM / Spark in local mode
+### Profiling a single JVM / Spark in local mode
 The following command was used to generate the output uploaded [here](https://github.com/g1thubhub/phil_stopwatch/tree/master/analytics/data/ProfileStraggler) from the [JobStraggler](https://github.com/g1thubhub/philstopwatch/blob/master/src/main/scala/profile/sparkjobs/JobStraggler.scala) class:
 ```terminal
 ~/spark-2.4.0-bin-hadoop2.7/bin/spark-submit \
@@ -71,8 +51,9 @@ The following command was used to generate the output uploaded [here](https://gi
 --class profile.sparkjobs.JobStraggler \
 target/scala-2.11/philstopwatch-assembly-0.1.jar > JobStraggler.log 
 ```
+If the JVM profiler is used in this fashion, three different kinds of records are generated by its _FileOutputReporter_ which are written to three separate JSON files: _ProcessInfo.json_, _CpuAndMemory.json_, and _Stacktrace.json_. 
 
-## Profiling executor JVMs
+### Profiling executor JVMs
 When Spark is launched in distributed mode, most of the actual work is done by Spark executors that run on remote cluster nodes. In order to profile their VMs, the following `conf` setting would need to be added to the launch command above:
 ```terminal
 --conf spark.executor.extraJavaOptions=[...]
@@ -87,7 +68,7 @@ The output of executing the PySpark edition of [Straggler](https://github.com/g1
 --conf spark.python.profile=true \
 ./spark_jobs/job_straggler.py  cpumemstack /users/phil/phil_stopwatch/analytics/data/profile_straggler > Straggler_PySpark.log
 ```
-As in the run of the "Scala" edition above, the second line activates the JVM profiling, only the output directory name has changed (*profile_straggler* instead of *ProfileStraggler*). This line is optional here since a PySpark app is launched but it might make sense to include this JVM profiling it as a majority of the work is performed outside of Python. The third line and the two input arguments to the script in the last line (`cpumemstack` and `/users/phil/phil_stopwatch/analytics/data/profile_straggler`) are required for the actual PySpark profiler: The config parameter (*--conf spark.python.profile=true*) tells Spark that a custom profiler will be used, the first script argument *cpumemstack* specifies the profiler class (a profiler that tracks CPU, memory and the stack) and the second argument specifies the directory to where the profiler records will be saved. 
+As in the run of the "Scala" edition above, the second line activates the JVM profiling, only the output directory name has changed (*profile_straggler* instead of *ProfileStraggler*). This line is optional here since a PySpark app is launched but it might make sense to include this JVM profiling it as a majority of the work is performed outside of Python. The third line and the two input arguments to the script in the last line (`cpumemstack` and `/users/phil/phil_stopwatch/analytics/data/profile_straggler`) are required for the actual PySpark profiler: The config parameter (*--conf spark.python.profile=true*) tells Spark that a custom profiler will be used, the first script argument *cpumemstack* specifies the profiler class (a profiler that tracks CPU, memory and the stack) and the second argument specifies the directory to where the profiler records will be saved. In that case, my PySpark profilers will create one or two different types of output records that are stored in at least two JSON files with the pattern _s_*_stack.json_ or  _s_*_cpumem.json_.
 
 Three PySpark profiler classes are included in [pyspark_profilers.py](https://github.com/g1thubhub/phil_stopwatch/blob/master/pyspark_profilers.py): [StackProfiler](https://github.com/g1thubhub/phil_stopwatch/blob/e83645f44e7fecf43331e0b1dcf9920a6deb027c/pyspark_profilers.py#L119) can be used to catch stack traces in order to create flame graphs, [CpuMemProfiler](https://github.com/g1thubhub/phil_stopwatch/blob/e83645f44e7fecf43331e0b1dcf9920a6deb027c/pyspark_profilers.py#L27) captures CPU and memory usage, and [CpuMemStackProfiler](https://github.com/g1thubhub/phil_stopwatch/blob/e83645f44e7fecf43331e0b1dcf9920a6deb027c/pyspark_profilers.py#L206) is a combination of these two. In order to use them, the `profiler_cls` field needs to be set with the name of the profiler as in this [example](https://github.com/g1thubhub/phil_stopwatch/blob/e83645f44e7fecf43331e0b1dcf9920a6deb027c/spark_jobs/job_straggler.py#L29) when constructing a *SparkContext* so there are three possible settings:
 * profiler_cls=StackProfiler
@@ -112,8 +93,10 @@ session.sparkContext.show_profiles()
 ``` 
 An example occurrence is [here](https://github.com/g1thubhub/phil_stopwatch/blob/e83645f44e7fecf43331e0b1dcf9920a6deb027c/spark_jobs/job_straggler.py#L46) 
 
+The script [plot_slacker.py](https://github.com/g1thubhub/phil_stopwatch/blob/master/analytics/plot_slacker.py) demonstrates how to create a combined JVM/PySpark metrics plot and flame graph.
 
-### Distributed Profiling
+
+## Distributed Profiling
 The last sentences already described some of the changes required for distributed PySpark profiling. For distributed JVM profiling, the worker nodes need to access the `jvm-profiler-1.0.0.jar` file so this JAR should be uploaded to the storage layer, in the case of S3 the copy command would be
 ```terminal
 aws s3 cp ./jvm-profiler-1.0.0.jar s3://your/bucket/jvm-profiler-1.0.0.jar
@@ -131,42 +114,50 @@ s3://path/to/your/project.jar
 The actual source code of the Spark application is located in the class `Class` inside package `your` and all source code is packaged inside the JAR file `project.jar`. The third line specifies the location of the profiler JAR that all Spark executors and the driver need to be able to access in case they are profiled. They are indeed, the fourth and fifth line activate *CpuAndMemory* profiling and *Stacktrace* sampling.
 
 
-
 ## Analyzing and Visualizing
 
-The code in this repo operates on two types of input, on the output records of a profiler described in the previous paragraphs or on Spark log files. Since the design is compositional, the records can be mixed in one or split across several files.
+As already mentioned, the code in this repo operates on two types of input, on the output records of a profiler or on Spark log files. Since the design is compositional, the records can be mixed in one or split across several files.
+
+To see which metrics were extracted, the method `.get_available_metrics()` returns a list of metric strings and is available on a _ProfileParser_ or _SparkLogParser_ object; the _SparkLogParser_ object would simply call the `get_available_metrics()` function of its enclosed _ProfileParser_. The same logic applies to `make_graph()` which constructs a graph from all metric values and to the more selective `get_metrics(['metric_name'])` which builds a graph only for the metrics included in its the list argument.
+
+To handle mixed JVM and PySpark profiles in the same file or to selectively build graphs for records from a specific profile subset, check [this script](https://github.com/g1thubhub/phil_stopwatch/blob/master/analytics/plot_fatso.py).
+
+Calling `get_executor_logparsers` on an *AppParser* object returns a list of all encapsulated *ProfileParser*s objects. Most class methods of [AppParser](https://github.com/g1thubhub/phil_stopwatch/blob/7dc3431572874d99d18451ec7f93e16ad15ebd23/parsers.py#L729) delegate to or accumulate values of its *ProfileParser*s objects, a good demonstration is [plot_application.py](https://github.com/g1thubhub/phil_stopwatch/blob/master/analytics/plot_application.py) which contains many examples.
 
 ### Analyzing and visualizing a local job / 4 riddles
 The source code of the four riddles inside the [spark_jobs](https://github.com/g1thubhub/phil_stopwatch/tree/master/spark_jobs) folder was executed in "local mode". Several scripts that produce visualizations and reports of the output of these riddles are included in the [analytics](https://github.com/g1thubhub/phil_stopwatch/tree/master/analytics) folder. 
 
-An example of a script that extracts "everything"   -- metric graphs, Spark -- and visualizes that is pasted below:
+An example of a script that extracts "everything" -- metric graphs, Spark tasks/stage/job boundaries -- and visualizes that is pasted below:
 
 ```python
 from plotly.offline import plot
-from plotly.graph_objs import Figure
+from plotly.graph_objs import Figure, Scatter
+from typing import List
 from parsers import ProfileParser, SparkLogParser
 from helper import get_max_y
+
 
 # Create a ProfileParser object to extract metrics graph:
 profile_file = './data/ProfileStraggler/CpuAndMemory.json.gz'  # Output from JVM profiler
 profile_parser = ProfileParser(profile_file, normalize=True)  # normalize various metrics
-data_points = profile_parser.make_graph()  # create graph lines of various metrics
+data_points: List[Scatter] = profile_parser.make_graph()  # create graph lines of various metrics
 
 # Create a SparkLogParser object to extract task/stage/job boundaries:
 log_file = './data/ProfileStraggler/JobStraggler.log.gz'  # standard Spark log
 log_parser = SparkLogParser(log_file)
 
-max = get_max_y(data_points)  # maximum y-value used to scale task lines extracted below:s
-task_data = log_parser.graph_tasks(max)  # create graph lines of all Spark tasks
+max: int = get_max_y(data_points)  # maximum y-value used to scale task lines extracted below:s
+task_data: List[Scatter] = log_parser.graph_tasks(max)  # create graph lines of all Spark tasks
 data_points.extend(task_data)
 
-stage_interval_markers = log_parser.extract_stage_markers()  # extract stage boundaries and will show on x-axis
+stage_interval_markers: Scatter = log_parser.extract_stage_markers()  # extract stage boundaries and will show on x-axis
 data_points.append(stage_interval_markers)
 layout = log_parser.extract_job_markers(max)  # extracts job boundaries and will show as vertical dotted lines
 
 # Plot the actual gaph and save it in 'everything.html'
 fig = Figure(data=data_points, layout=layout)
 plot(fig, filename='everything.html')
+
 ```
 
 ### Analyzing and visualizing a distributed application
@@ -221,13 +212,6 @@ The final output file *FatsoFlame.svg* can be opened in a browser. The procedure
 Phils-MacBook-Pro:analytics a$ python3 fold_stacks.py ./analytics/data/profile_fatso/s_8_stack.json  > FatsoPyspark.folded
 Phils-MacBook-Pro:analytics a$ perl flamegraph.pl  FatsoPyspark.folded  > FatsoPySparkFlame.svg
 ```
-A combined JVM/PySpark 
+The script [plot_slacker.py](https://github.com/g1thubhub/phil_stopwatch/blob/master/analytics/plot_slacker.py) mentions the steps needed to create a combined JVM/PySpark flame graph.
 
-Normalized units
-
-
-spaCy
-os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
-
-
-
+Made at https://github.com/g1thubhub/phil_stopwatch by writingphil@gmail.com

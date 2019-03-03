@@ -1,19 +1,19 @@
 from plotly.offline import plot
 from parsers import ProfileParser, SparkLogParser
-from plotly.graph_objs import Figure
-
+from plotly.graph_objs import Figure, Scatter
+from typing import List
 
 # The two files used below are created by running
 #  ~/spark-2.4.0-bin-hadoop2.7/bin/spark-submit --class profile.sparkjobs.JobFatso --conf spark.driver.extraJavaOptions=-javaagent:/Users/phil/jvm-profiler/target/jvm-profiler-1.0.0.jar=sampleInterval=100,metricInterval=100,reporter=com.uber.profiling.reporters.FileOutputReporter,outputDir=./ProfileFatso   target/scala-2.11/philstopwatch-assembly-0.1.jar > JobFatso.log
 
 profile_file = './data/ProfileFatso/CpuAndMemoryFatso.json.gz'  # Output from JVM profiler
 profile_parser = ProfileParser(profile_file, normalize=True)
-data_points = profile_parser.make_graph()
+data_points: List[Scatter] = profile_parser.make_graph()
 
 
-logfile = './data/ProfileFatso/JobFatso.log.gz'
+logfile = './data/ProfileFatso/JobFatso.log.gz'  # standard Spark logs
 log_parser = SparkLogParser(logfile)
-stage_interval_markers = log_parser.extract_stage_markers()
+stage_interval_markers: Scatter = log_parser.extract_stage_markers()
 data_points.append(stage_interval_markers)
 
 layout = log_parser.extract_job_markers(700)

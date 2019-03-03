@@ -7,3 +7,5 @@ elif len(argv) == 1:
     StackParser.convert_file(argv[1])
 else:
     StackParser.convert_files(argv[1:])
+
+# Made at https://github.com/g1thubhub/phil_stopwatch by writingphil@gmail.com
