@@ -1,6 +1,6 @@
 # Phil's Stopwatch for profiling Spark
 
-A tech blog can be found hereXXX
+A tech blog showing some of the features of this library can be found [here](https://g1thubhub.github.io/4-bigdata-riddles)
 
 The Scala sources for the riddles in can be found in this [companion project](https://github.com/g1thubhub/philstopwatch)
 
